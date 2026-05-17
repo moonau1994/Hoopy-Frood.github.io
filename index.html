@@ -226,6 +226,36 @@
   </div>
 </div>
 
+<!-- EDIT LECTURE MODAL -->
+<div class="modal-overlay" id="editLectureModal">
+  <div class="modal">
+    <h3>Edit Lecture</h3>
+    <input type="hidden" id="eLectureId">
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="eTitle">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="eDate">
+      </div>
+      <div class="form-group">
+        <label>Topic Tag</label>
+        <input type="text" id="eTag">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="eDesc" placeholder="Brief overview of this session..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('editLectureModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditedLecture()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADD ITEM MODAL -->
 <div class="modal-overlay" id="addItemModal">
   <div class="modal">
@@ -262,7 +292,7 @@
   // =============================================
   // CONFIGURATION — change these before deploying
   // =============================================
-  const ADMIN_PW = 'DootDoot2282!'; // <-- Change this to your own password!
+  const ADMIN_PW = 'admin1234'; // <-- Change this to your own password!
   // =============================================
 
   let isAdmin = false;
@@ -341,6 +371,7 @@
       d.onclick = () => showLecture(lec.id);
       d.innerHTML = `
         ${isAdmin ? `<div class="card-actions" onclick="event.stopPropagation()">
+          <button class="icon-btn" onclick="showEditLectureModal('${lec.id}')">✏️</button>
           <button class="icon-btn" onclick="deleteLecture('${lec.id}')">🗑</button>
         </div>` : ''}
         <h3>${lec.title}</h3>
@@ -381,6 +412,30 @@
     if (!confirm('Delete this lecture and all its content?')) return;
     state.lectures = state.lectures.filter(l => l.id !== id);
     saveState();
+    renderHome();
+  }
+
+  function showEditLectureModal(id) {
+    const lec = state.lectures.find(l => l.id === id);
+    if (!lec) return;
+    document.getElementById('eLectureId').value = id;
+    document.getElementById('eTitle').value = lec.title || '';
+    document.getElementById('eDate').value = lec.date || '';
+    document.getElementById('eTag').value = lec.tag || '';
+    document.getElementById('eDesc').value = lec.desc || '';
+    document.getElementById('editLectureModal').classList.add('active');
+  }
+
+  function saveEditedLecture() {
+    const id = document.getElementById('eLectureId').value;
+    const lec = state.lectures.find(l => l.id === id);
+    if (!lec) return;
+    lec.title = document.getElementById('eTitle').value.trim();
+    lec.date = document.getElementById('eDate').value;
+    lec.tag = document.getElementById('eTag').value.trim();
+    lec.desc = document.getElementById('eDesc').value.trim();
+    saveState();
+    closeModal('editLectureModal');
     renderHome();
   }
 
