@@ -263,15 +263,20 @@
     <h3>Edit Item</h3>
     <input type="hidden" id="eItemLid">
     <input type="hidden" id="eItemIdx">
+    <input type="hidden" id="eItemType">
     <div class="form-group">
       <label>Title</label>
       <input type="text" id="eItemTitle">
     </div>
-    <div class="form-group">
+    <div class="form-group" id="eItemUrlGroup" style="display:none">
+      <label>Video URL (YouTube / Vimeo)</label>
+      <input type="text" id="eItemUrl" placeholder="https://youtube.com/watch?v=...">
+    </div>
+    <div class="form-group" id="eItemBodyGroup" style="display:none">
       <label>Body</label>
       <textarea id="eItemBody" style="min-height:200px"></textarea>
     </div>
-    <div class="form-group">
+    <div class="form-group" id="eItemSubtitleGroup" style="display:none">
       <label>Commentary Subtitle (optional)</label>
       <input type="text" id="eItemSubtitle">
     </div>
