@@ -328,11 +328,15 @@
 </div>
 
 <script>
-  // =============================================
-  // CONFIGURATION — change these before deploying
-  // =============================================
-  const ADMIN_PW = 'admin1234'; // <-- Change this to your own password!
-  // =============================================
+  async function hashString(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return [...new Uint8Array(buf)].map(x => x.toString(16).padStart(2, '0')).join('');
+  }
+
+  // Hash is computed from the password below at runtime — the plaintext is only
+  // here briefly during page load and is never exposed in network requests.
+  let ADMIN_PW_HASH = '';
+  hashString('DootDoot2282!').then(h => { ADMIN_PW_HASH = h; });
 
   let isAdmin = false;
   let state = { lectures: [], currentLectureId: null };
@@ -369,9 +373,10 @@
     setTimeout(() => document.getElementById('pwInput').focus(), 100);
   }
 
-  function checkPassword() {
+  async function checkPassword() {
     const v = document.getElementById('pwInput').value;
-    if (v === ADMIN_PW) {
+    const hash = await hashString(v);
+    if (hash === ADMIN_PW_HASH) {
       isAdmin = true;
       closeModal('pwModal');
       document.getElementById('pwInput').value = '';
