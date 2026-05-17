@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hoopy Frood</title>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a35;
+    --accent: #7c3aed;
+    --accent2: #a855f7;
+    --text: #e8e8f0;
+    --muted: #888899;
+    --humor: #f59e0b;
+    --context: #06b6d4;
+    --citation: #10b981;
+    --evidence: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+  .logo { font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+  .logo span { font-size: 0.7rem; color: var(--muted); display: block; -webkit-text-fill-color: var(--muted); font-weight: 400; letter-spacing: 2px; text-transform: uppercase; }
+  .nav-btns { display: flex; gap: 0.75rem; align-items: center; }
+  .btn { padding: 0.4rem 1rem; border-radius: 6px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+
+  .view { display: none; padding: 2rem; max-width: 1100px; margin: 0 auto; }
+  .view.active { display: block; }
+
+  .page-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.3rem; }
+  .page-sub { color: var(--muted); margin-bottom: 2rem; font-size: 0.95rem; }
+  .lecture-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; }
+  .lecture-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: all 0.2s; position: relative; }
+  .lecture-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .lecture-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .lecture-card .date { color: var(--muted); font-size: 0.78rem; margin-bottom: 0.75rem; }
+  .lecture-card .item-count { font-size: 0.8rem; color: var(--accent2); }
+  .lecture-card .card-actions { position: absolute; top: 0.75rem; right: 0.75rem; display: flex; gap: 0.4rem; opacity: 0; transition: opacity 0.2s; }
+  .lecture-card:hover .card-actions { opacity: 1; }
+  .icon-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); border-radius: 6px; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.75rem; }
+  .icon-btn:hover { color: var(--text); border-color: var(--accent); }
+  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+  .empty-state .big { font-size: 3rem; margin-bottom: 1rem; }
+
+  .lecture-header { margin-bottom: 2rem; }
+  .lecture-header h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.3rem; }
+  .lecture-header .meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
+  .lecture-header .actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .share-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.82rem; color: var(--muted); font-family: monospace; display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; }
+  .share-box span { flex: 1; color: var(--accent2); }
+
+  .media-feed { display: flex; flex-direction: column; gap: 1.25rem; }
+  .media-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .media-card .card-top { padding: 1rem 1.25rem 0; display: flex; align-items: center; justify-content: space-between; }
+  .tag { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .tag-humor { background: rgba(245,158,11,0.15); color: var(--humor); }
+  .tag-context { background: rgba(6,182,212,0.15); color: var(--context); }
+  .tag-citation { background: rgba(16,185,129,0.15); color: var(--citation); }
+  .tag-evidence { background: rgba(239,68,68,0.15); color: var(--evidence); }
+  .media-content { padding: 0.75rem 1.25rem; }
+  .media-content img { width: 100%; border-radius: 8px; max-height: 420px; object-fit: contain; background: #000; }
+  .media-content .video-wrap { position: relative; padding-bottom: 56.25%; border-radius: 8px; overflow: hidden; background: #000; }
+  .media-content .video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+  .media-commentary { padding: 0.75rem 1.25rem 1rem; }
+  .media-commentary p { color: var(--text); line-height: 1.6; font-size: 0.95rem; }
+  .media-commentary .media-title { font-weight: 700; margin-bottom: 0.3rem; font-size: 1rem; }
+  .citation-card { background: var(--surface2); border-left: 3px solid var(--citation); border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin: 0.75rem 1.25rem; }
+  .citation-card .cite-title { font-weight: 700; margin-bottom: 0.25rem; }
+  .citation-card .cite-authors { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.5rem; }
+  .citation-card a { color: var(--citation); font-size: 0.85rem; text-decoration: none; }
+  .citation-card a:hover { text-decoration: underline; }
+
+  #presentation { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
+  #presentation.active { display: flex; }
+  .pres-slide { max-width: 900px; width: 100%; padding: 2rem; text-align: center; }
+  .pres-slide img { max-height: 60vh; max-width: 100%; border-radius: 12px; object-fit: contain; }
+  .pres-slide .video-wrap { position: relative; padding-bottom: 56.25%; border-radius: 12px; overflow: hidden; }
+  .pres-slide .video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+  .pres-commentary { margin-top: 1.5rem; color: #e8e8f0; font-size: 1.2rem; line-height: 1.6; }
+  .pres-tag { margin-bottom: 0.75rem; }
+  .pres-nav { position: fixed; bottom: 2rem; display: flex; gap: 1rem; align-items: center; }
+  .pres-nav button { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 0.6rem 1.5rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
+  .pres-nav button:hover { background: rgba(255,255,255,0.2); }
+  .pres-counter { color: rgba(255,255,255,0.5); font-size: 0.85rem; }
+  .pres-close { position: fixed; top: 1.5rem; right: 1.5rem; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; align-items: center; justify-content: center; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; width: 90%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+  .modal h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.25rem; }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 0.4rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input, .form-group textarea, .form-group select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 0.6rem 0.85rem; font-size: 0.9rem; font-family: inherit; }
+  .form-group textarea { min-height: 80px; resize: vertical; }
+  .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+  .form-row { display: flex; gap: 0.75rem; }
+  .form-row .form-group { flex: 1; }
+  .modal-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; justify-content: flex-end; }
+  .type-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .type-tab { padding: 0.35rem 0.85rem; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.82rem; transition: all 0.2s; }
+  .type-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .pw-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; width: 90%; max-width: 380px; text-align: center; }
+  .pw-box h2 { font-size: 1.3rem; margin-bottom: 0.5rem; }
+  .pw-box p { color: var(--muted); font-size: 0.88rem; margin-bottom: 1.5rem; }
+  .pw-box input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 0.7rem 1rem; font-size: 1rem; margin-bottom: 1rem; text-align: center; letter-spacing: 2px; }
+  .pw-box input:focus { outline: none; border-color: var(--accent); }
+  .pw-error { color: #ef4444; font-size: 0.82rem; margin-top: 0.5rem; }
+
+  .back-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.88rem; padding: 0; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.4rem; }
+  .back-btn:hover { color: var(--text); }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Hoopy Frood <span>AI Literacy Lecture Hub</span></div>
+  <div class="nav-btns">
+    <button class="btn btn-ghost btn-sm" id="adminBtn" onclick="showPasswordModal()">Admin</button>
+    <button class="btn btn-primary btn-sm" id="addLectureBtn" style="display:none" onclick="showAddLectureModal()">+ New Lecture</button>
+  </div>
+</nav>
+
+<div class="view active" id="homeView">
+  <div style="margin-top:1.5rem">
+    <div class="page-title">Lecture Sessions</div>
+    <div class="page-sub">AI literacy — commentary, context & chaos</div>
+    <div class="lecture-grid" id="lectureGrid"></div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="big">🐬</div>
+      <div style="font-size:1.1rem;margin-bottom:0.5rem;color:var(--text)">So long, and thanks for all the fish.</div>
+      <div>No lectures yet. Log in as admin to create your first session.</div>
+    </div>
+  </div>
+</div>
+
+<div class="view" id="lectureView">
+  <div style="margin-top:1.5rem">
+    <button class="back-btn" onclick="showHome()">← Back to lectures</button>
+    <div class="lecture-header">
+      <h2 id="lectureTitle"></h2>
+      <div class="meta" id="lectureMeta"></div>
+      <div class="actions">
+        <button class="btn btn-ghost btn-sm" onclick="copyShareLink()">🔗 Copy share link</button>
+        <button class="btn btn-ghost btn-sm" onclick="startPresentation()">⛶ Presentation mode</button>
+        <button class="btn btn-primary btn-sm" id="addItemBtn" style="display:none" onclick="showAddItemModal()">+ Add item</button>
+      </div>
+      <div class="share-box" id="shareBox" style="display:none">
+        <span id="shareUrl"></span>
+        <button class="btn btn-ghost btn-sm" onclick="copyShareLink()">Copy</button>
+      </div>
+    </div>
+    <div class="media-feed" id="mediaFeed"></div>
+    <div class="empty-state" id="feedEmpty" style="display:none">
+      <div class="big">🤔</div>
+      <div style="color:var(--text);margin-bottom:0.5rem">Nothing here yet.</div>
+      <div>Add videos, memes, GIFs, and citations to build this lecture.</div>
+    </div>
+  </div>
+</div>
+
+<div id="presentation">
+  <button class="pres-close" onclick="endPresentation()">✕ Exit</button>
+  <div class="pres-slide" id="presSlide"></div>
+  <div class="pres-nav">
+    <button onclick="prevSlide()">← Prev</button>
+    <div class="pres-counter" id="presCounter"></div>
+    <button onclick="nextSlide()">Next →</button>
+  </div>
+</div>
+
+<!-- PASSWORD MODAL -->
+<div class="modal-overlay" id="pwModal">
+  <div class="pw-box">
+    <h2>Admin Access</h2>
+    <p>Enter the password to manage lectures and content.</p>
+    <input type="password" id="pwInput" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPassword()">
+    <button class="btn btn-primary" style="width:100%" onclick="checkPassword()">Unlock</button>
+    <div class="pw-error" id="pwError"></div>
+    <hr class="divider">
+    <button class="btn btn-ghost btn-sm" onclick="closeModal('pwModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- ADD LECTURE MODAL -->
+<div class="modal-overlay" id="addLectureModal">
+  <div class="modal">
+    <h3>New Lecture Session</h3>
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="lTitle" placeholder="e.g. The Ethics of Generative AI">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="lDate">
+      </div>
+      <div class="form-group">
+        <label>Topic Tag</label>
+        <input type="text" id="lTag" placeholder="e.g. AI Ethics">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Description (optional)</label>
+      <textarea id="lDesc" placeholder="Brief overview of this session..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('addLectureModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLecture()">Create Lecture</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ITEM MODAL -->
+<div class="modal-overlay" id="addItemModal">
+  <div class="modal">
+    <h3>Add Media Item</h3>
+    <div class="type-tabs">
+      <button class="type-tab active" onclick="setType('video',this)">📹 Video</button>
+      <button class="type-tab" onclick="setType('meme',this)">🖼 Meme/Image</button>
+      <button class="type-tab" onclick="setType('gif',this)">🎞 GIF</button>
+      <button class="type-tab" onclick="setType('citation',this)">📄 Citation/Link</button>
+    </div>
+    <div id="typeFields"></div>
+    <div class="form-group">
+      <label>Tag</label>
+      <select id="iTag">
+        <option value="context">Context</option>
+        <option value="humor">Humor</option>
+        <option value="evidence">Evidence</option>
+        <option value="citation">Citation</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Commentary</label>
+      <textarea id="iCommentary" placeholder="Your commentary, context, or caption..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('addItemModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveItem()">Add Item</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // =============================================
+  // CONFIGURATION — change these before deploying
+  // =============================================
+  const ADMIN_PW = 'admin1234'; // <-- Change this to your own password!
+  // =============================================
+
+  let isAdmin = false;
+  let state = { lectures: [], currentLectureId: null };
+  let presItems = [], presIdx = 0;
+  let currentItemType = 'video';
+
+  // ---- STORAGE (localStorage for self-hosted) ----
+  function loadState() {
+    try {
+      const raw = localStorage.getItem('hoopy_state');
+      if (raw) state = JSON.parse(raw);
+    } catch(e) {}
+    renderHome();
+    checkUrlHash();
+  }
+
+  function saveState() {
+    localStorage.setItem('hoopy_state', JSON.stringify(state));
+  }
+
+  // ---- ROUTING ----
+  function checkUrlHash() {
+    const h = location.hash;
+    if (h.startsWith('#lecture-')) {
+      const id = h.replace('#lecture-', '');
+      const lec = state.lectures.find(l => l.id === id);
+      if (lec) showLecture(id);
+    }
+  }
+
+  // ---- AUTH ----
+  function showPasswordModal() {
+    document.getElementById('pwModal').classList.add('active');
+    setTimeout(() => document.getElementById('pwInput').focus(), 100);
+  }
+
+  function checkPassword() {
+    const v = document.getElementById('pwInput').value;
+    if (v === ADMIN_PW) {
+      isAdmin = true;
+      closeModal('pwModal');
+      document.getElementById('pwInput').value = '';
+      updateAdminUI();
+    } else {
+      document.getElementById('pwError').textContent = 'Incorrect password.';
+    }
+  }
+
+  function updateAdminUI() {
+    document.getElementById('adminBtn').style.display = isAdmin ? 'none' : '';
+    document.getElementById('addLectureBtn').style.display = isAdmin ? '' : 'none';
+    document.getElementById('addItemBtn').style.display = isAdmin ? '' : 'none';
+    renderHome();
+    if (state.currentLectureId) renderLecture(state.currentLectureId);
+  }
+
+  // ---- HOME ----
+  function showHome() {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('homeView').classList.add('active');
+    state.currentLectureId = null;
+    history.pushState(null, '', location.pathname);
+    renderHome();
+  }
+
+  function renderHome() {
+    const grid = document.getElementById('lectureGrid');
+    const empty = document.getElementById('emptyState');
+    grid.innerHTML = '';
+    if (!state.lectures.length) { empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    state.lectures.forEach(lec => {
+      const d = document.createElement('div');
+      d.className = 'lecture-card';
+      d.onclick = () => showLecture(lec.id);
+      d.innerHTML = `
+        ${isAdmin ? `<div class="card-actions" onclick="event.stopPropagation()">
+          <button class="icon-btn" onclick="deleteLecture('${lec.id}')">🗑</button>
+        </div>` : ''}
+        <h3>${lec.title}</h3>
+        <div class="date">${lec.date || ''}${lec.tag ? ' · ' + lec.tag : ''}</div>
+        ${lec.desc ? `<div style="font-size:0.83rem;color:var(--muted);margin-bottom:0.75rem">${lec.desc}</div>` : ''}
+        <div class="item-count">${(lec.items||[]).length} item${(lec.items||[]).length !== 1 ? 's' : ''}</div>`;
+      grid.appendChild(d);
+    });
+  }
+
+  // ---- LECTURES ----
+  function showAddLectureModal() {
+    document.getElementById('addLectureModal').classList.add('active');
+    document.getElementById('lDate').value = new Date().toISOString().split('T')[0];
+  }
+
+  function saveLecture() {
+    const title = document.getElementById('lTitle').value.trim();
+    if (!title) return;
+    const lec = {
+      id: Date.now().toString(),
+      title,
+      date: document.getElementById('lDate').value,
+      tag: document.getElementById('lTag').value.trim(),
+      desc: document.getElementById('lDesc').value.trim(),
+      items: []
+    };
+    state.lectures.unshift(lec);
+    saveState();
+    closeModal('addLectureModal');
+    document.getElementById('lTitle').value = '';
+    document.getElementById('lTag').value = '';
+    document.getElementById('lDesc').value = '';
+    renderHome();
+  }
+
+  function deleteLecture(id) {
+    if (!confirm('Delete this lecture and all its content?')) return;
+    state.lectures = state.lectures.filter(l => l.id !== id);
+    saveState();
+    renderHome();
+  }
+
+  // ---- LECTURE VIEW ----
+  function showLecture(id) {
+    state.currentLectureId = id;
+    const lec = state.lectures.find(l => l.id === id);
+    if (!lec) return;
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('lectureView').classList.add('active');
+    document.getElementById('lectureTitle').textContent = lec.title;
+    document.getElementById('lectureMeta').textContent = [lec.date, lec.tag].filter(Boolean).join(' · ');
+    document.getElementById('addItemBtn').style.display = isAdmin ? '' : 'none';
+    history.pushState(null, '', `#lecture-${id}`);
+    renderLecture(id);
+  }
+
+  function renderLecture(id) {
+    const lec = state.lectures.find(l => l.id === id);
+    if (!lec) return;
+    const feed = document.getElementById('mediaFeed');
+    const empty = document.getElementById('feedEmpty');
+    feed.innerHTML = '';
+    if (!(lec.items || []).length) { empty.style.display = ''; return; }
+    empty.style.display = 'none';
+    lec.items.forEach((item, idx) => {
+      const card = document.createElement('div');
+      card.className = 'media-card';
+      card.innerHTML = `
+        <div class="card-top">
+          <span class="tag tag-${item.tag}">${item.tag}</span>
+          ${isAdmin ? `<div style="display:flex;gap:0.5rem">
+            <button class="icon-btn" onclick="moveItem('${id}',${idx},-1)">↑</button>
+            <button class="icon-btn" onclick="moveItem('${id}',${idx},1)">↓</button>
+            <button class="icon-btn" onclick="deleteItem('${id}',${idx})">🗑</button>
+          </div>` : ''}
+        </div>
+        ${renderItemContent(item)}
+        <div class="media-commentary">
+          ${item.title && item.type !== 'citation' ? `<div class="media-title">${item.title}</div>` : ''}
+          ${item.commentary ? `<p>${item.commentary}</p>` : ''}
+        </div>`;
+      feed.appendChild(card);
+    });
+  }
+
+  function renderItemContent(item) {
+    if (item.type === 'video') {
+      const embed = getVideoEmbed(item.url);
+      if (embed) return `<div class="media-content"><div class="video-wrap"><iframe src="${embed}" allowfullscreen></iframe></div></div>`;
+      return `<div class="media-content"><a href="${item.url}" target="_blank" style="color:var(--accent2)">${item.url}</a></div>`;
+    }
+    if (item.type === 'meme' || item.type === 'gif') {
+      return `<div class="media-content"><img src="${item.url}" alt="${item.title || ''}"></div>`;
+    }
+    if (item.type === 'citation') {
+      return `<div class="citation-card">
+        <div class="cite-title">${item.title || ''}</div>
+        ${item.authors ? `<div class="cite-authors">${item.authors}</div>` : ''}
+        ${item.url ? `<a href="${item.url}" target="_blank">→ ${item.url}</a>` : ''}
+      </div>`;
+    }
+    return '';
+  }
+
+  function getVideoEmbed(url) {
+    let m;
+    if ((m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/))) return `https://www.youtube.com/embed/${m[1]}`;
+    if ((m = url.match(/vimeo\.com\/(\d+)/))) return `https://player.vimeo.com/video/${m[1]}`;
+    return null;
+  }
+
+  function moveItem(lid, idx, dir) {
+    const lec = state.lectures.find(l => l.id === lid);
+    const ni = idx + dir;
+    if (ni < 0 || ni >= lec.items.length) return;
+    [lec.items[idx], lec.items[ni]] = [lec.items[ni], lec.items[idx]];
+    saveState();
+    renderLecture(lid);
+  }
+
+  function deleteItem(lid, idx) {
+    if (!confirm('Remove this item?')) return;
+    const lec = state.lectures.find(l => l.id === lid);
+    lec.items.splice(idx, 1);
+    saveState();
+    renderLecture(lid);
+  }
+
+  // ---- ADD ITEM ----
+  function showAddItemModal() {
+    document.getElementById('addItemModal').classList.add('active');
+    setType('video', document.querySelector('.type-tab'));
+  }
+
+  function setType(type, btn) {
+    currentItemType = type;
+    document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    const fields = document.getElementById('typeFields');
+    if (type === 'video') fields.innerHTML = `<div class="form-group"><label>Video URL (YouTube / Vimeo)</label><input type="text" id="iUrl" placeholder="https://youtube.com/watch?v=..."></div><div class="form-group"><label>Title (optional)</label><input type="text" id="iTitle"></div>`;
+    else if (type === 'meme' || type === 'gif') fields.innerHTML = `<div class="form-group"><label>Image URL</label><input type="text" id="iUrl" placeholder="https://..."></div><div class="form-group"><label>Title (optional)</label><input type="text" id="iTitle"></div>`;
+    else if (type === 'citation') fields.innerHTML = `<div class="form-group"><label>Paper / Resource Title</label><input type="text" id="iTitle"></div><div class="form-group"><label>Authors</label><input type="text" id="iAuthors" placeholder="Smith et al., 2024"></div><div class="form-group"><label>URL / DOI</label><input type="text" id="iUrl" placeholder="https://..."></div>`;
+  }
+
+  function saveItem() {
+    const lec = state.lectures.find(l => l.id === state.currentLectureId);
+    if (!lec) return;
+    const item = {
+      type: currentItemType,
+      url: document.getElementById('iUrl')?.value.trim() || '',
+      title: document.getElementById('iTitle')?.value.trim() || '',
+      authors: document.getElementById('iAuthors')?.value.trim() || '',
+      commentary: document.getElementById('iCommentary').value.trim(),
+      tag: document.getElementById('iTag').value
+    };
+    lec.items.push(item);
+    saveState();
+    closeModal('addItemModal');
+    document.getElementById('iCommentary').value = '';
+    renderLecture(state.currentLectureId);
+  }
+
+  // ---- SHARE ----
+  function copyShareLink() {
+    const url = `${location.origin}${location.pathname}#lecture-${state.currentLectureId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      const b = document.querySelector('.actions .btn-ghost');
+      const orig = b.textContent;
+      b.textContent = '✓ Copied!';
+      setTimeout(() => b.textContent = orig, 2000);
+    });
+    document.getElementById('shareBox').style.display = 'flex';
+    document.getElementById('shareUrl').textContent = url;
+  }
+
+  // ---- PRESENTATION ----
+  function startPresentation() {
+    const lec = state.lectures.find(l => l.id === state.currentLectureId);
+    if (!lec || !lec.items.length) return alert('No items to present!');
+    presItems = lec.items; presIdx = 0;
+    document.getElementById('presentation').classList.add('active');
+    renderSlide();
+  }
+
+  function endPresentation() { document.getElementById('presentation').classList.remove('active'); }
+  function nextSlide() { if (presIdx < presItems.length - 1) { presIdx++; renderSlide(); } }
+  function prevSlide() { if (presIdx > 0) { presIdx--; renderSlide(); } }
+
+  function renderSlide() {
+    const item = presItems[presIdx];
+    document.getElementById('presCounter').textContent = `${presIdx + 1} / ${presItems.length}`;
+    const slide = document.getElementById('presSlide');
+    let content = '';
+    if (item.type === 'video') {
+      const e = getVideoEmbed(item.url);
+      content = e ? `<div class="video-wrap"><iframe src="${e}" allowfullscreen></iframe></div>` : `<a href="${item.url}" target="_blank" style="color:var(--accent2)">${item.url}</a>`;
+    } else if (item.type === 'meme' || item.type === 'gif') {
+      content = `<img src="${item.url}" alt="">`;
+    } else if (item.type === 'citation') {
+      content = `<div style="background:var(--surface);border-left:3px solid var(--citation);padding:1.5rem 2rem;border-radius:0 12px 12px 0;text-align:left;max-width:600px;margin:0 auto">
+        <div style="font-size:1.3rem;font-weight:700;margin-bottom:0.5rem">${item.title}</div>
+        ${item.authors ? `<div style="color:var(--muted);margin-bottom:0.75rem">${item.authors}</div>` : ''}
+        ${item.url ? `<a href="${item.url}" target="_blank" style="color:var(--citation)">${item.url}</a>` : ''}
+      </div>`;
+    }
+    slide.innerHTML = `<div class="pres-tag"><span class="tag tag-${item.tag}">${item.tag}</span></div>${content}
+      ${item.title && item.type !== 'citation' ? `<div class="pres-commentary" style="font-weight:700">${item.title}</div>` : ''}
+      ${item.commentary ? `<div class="pres-commentary">${item.commentary}</div>` : ''}`;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('presentation').classList.contains('active')) return;
+    if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+    if (e.key === 'ArrowLeft') prevSlide();
+    if (e.key === 'Escape') endPresentation();
+  });
+
+  // ---- UTILS ----
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+  window.addEventListener('click', e => { if (e.target.classList.contains('modal-overlay')) closeModal(e.target.id); });
+
+  // ---- INIT ----
+  loadState();
+</script>
+</body>
+</html>
