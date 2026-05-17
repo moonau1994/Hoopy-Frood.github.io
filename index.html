@@ -83,6 +83,7 @@
   .text-post-body { font-size: 0.97rem; line-height: 1.8; color: #c8c8d8; }
   .text-para { margin-bottom: 1rem; }
   .text-para:last-child { margin-bottom: 0; }
+  .media-subtitle { font-size: 0.85rem; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.35rem; }
 
   #presentation { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
   #presentation.active { display: flex; }
@@ -269,6 +270,10 @@
     <div class="form-group">
       <label>Body</label>
       <textarea id="eItemBody" style="min-height:200px"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Commentary Subtitle (optional)</label>
+      <input type="text" id="eItemSubtitle">
     </div>
     <div class="form-group">
       <label>Tag</label>
@@ -511,6 +516,7 @@
         ${renderItemContent(item)}
         <div class="media-commentary">
           ${item.title && item.type !== 'citation' ? `<div class="media-title">${item.title}</div>` : ''}
+          ${item.type === 'text' && item.subtitle ? `<div class="media-subtitle">${item.subtitle}</div>` : ''}
           ${item.commentary ? `<p>${item.commentary}</p>` : ''}
         </div>`;
       feed.appendChild(card);
@@ -575,6 +581,7 @@
     document.getElementById('eItemIdx').value = idx;
     document.getElementById('eItemTitle').value = item.title || '';
     document.getElementById('eItemBody').value = item.body || '';
+    document.getElementById('eItemSubtitle').value = item.subtitle || '';
     document.getElementById('eItemTag').value = item.tag || 'context';
     document.getElementById('eItemCommentary').value = item.commentary || '';
     document.getElementById('editItemModal').classList.add('active');
@@ -587,6 +594,7 @@
     if (!lec) return;
     lec.items[idx].title = document.getElementById('eItemTitle').value.trim();
     lec.items[idx].body = document.getElementById('eItemBody').value.trim();
+    lec.items[idx].subtitle = document.getElementById('eItemSubtitle').value.trim();
     lec.items[idx].tag = document.getElementById('eItemTag').value;
     lec.items[idx].commentary = document.getElementById('eItemCommentary').value.trim();
     saveState();
@@ -608,7 +616,7 @@
     if (type === 'video') fields.innerHTML = `<div class="form-group"><label>Video URL (YouTube / Vimeo)</label><input type="text" id="iUrl" placeholder="https://youtube.com/watch?v=..."></div><div class="form-group"><label>Title (optional)</label><input type="text" id="iTitle"></div>`;
     else if (type === 'meme' || type === 'gif') fields.innerHTML = `<div class="form-group"><label>Image URL</label><input type="text" id="iUrl" placeholder="https://..."></div><div class="form-group"><label>Title (optional)</label><input type="text" id="iTitle"></div>`;
     else if (type === 'citation') fields.innerHTML = `<div class="form-group"><label>Paper / Resource Title</label><input type="text" id="iTitle"></div><div class="form-group"><label>Authors</label><input type="text" id="iAuthors" placeholder="Smith et al., 2024"></div><div class="form-group"><label>URL / DOI</label><input type="text" id="iUrl" placeholder="https://..."></div>`;
-    else if (type === 'text') fields.innerHTML = `<div class="form-group"><label>Title</label><input type="text" id="iTitle" placeholder="e.g. A Note on Hallucination"></div><div class="form-group"><label>Body</label><textarea id="iBody" placeholder="Write your piece here. Blank lines become paragraph breaks." style="min-height:200px"></textarea></div>`;
+    else if (type === 'text') fields.innerHTML = `<div class="form-group"><label>Title</label><input type="text" id="iTitle" placeholder="e.g. A Note on Hallucination"></div><div class="form-group"><label>Body</label><textarea id="iBody" placeholder="Write your piece here. Blank lines become paragraph breaks." style="min-height:200px"></textarea></div><div class="form-group"><label>Commentary Subtitle (optional)</label><input type="text" id="iSubtitle" placeholder="e.g. Editor's Note"></div>`;
   }
 
   function saveItem() {
@@ -620,6 +628,7 @@
       title: document.getElementById('iTitle')?.value.trim() || '',
       authors: document.getElementById('iAuthors')?.value.trim() || '',
       body: document.getElementById('iBody')?.value.trim() || '',
+      subtitle: document.getElementById('iSubtitle')?.value.trim() || '',
       commentary: document.getElementById('iCommentary').value.trim(),
       tag: document.getElementById('iTag').value
     };
