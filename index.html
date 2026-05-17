@@ -542,7 +542,7 @@
     }
     if (item.type === 'pdf') {
       return `<div class="media-content">
-        <iframe src="${item.url}" width="100%" height="${item.pdfHeight || 600}px" style="border:none;border-radius:8px;background:#fff"></iframe>
+        <iframe src="${item.url}" width="${item.pdfWidth || '100%'}" height="${item.pdfHeight || 600}px" style="border:none;border-radius:8px;background:#fff"></iframe>
         <div style="text-align:right;margin-top:0.4rem">
           <a href="${item.url}" target="_blank" style="color:var(--accent2);font-size:0.8rem">↗ Open in new tab</a>
         </div>
@@ -651,7 +651,7 @@
     else if (type === 'meme' || type === 'gif') fields.innerHTML = `<div class="form-group"><label>Image URL</label><input type="text" id="iUrl" placeholder="https://..."></div><div class="form-group"><label>Title (optional)</label><input type="text" id="iTitle"></div>`;
     else if (type === 'citation') fields.innerHTML = `<div class="form-group"><label>Paper / Resource Title</label><input type="text" id="iTitle"></div><div class="form-group"><label>Authors</label><input type="text" id="iAuthors" placeholder="Smith et al., 2024"></div><div class="form-group"><label>URL / DOI</label><input type="text" id="iUrl" placeholder="https://..."></div>`;
     else if (type === 'text') fields.innerHTML = `<div class="form-group"><label>Title</label><input type="text" id="iTitle" placeholder="e.g. A Note on Hallucination"></div><div class="form-group"><label>Body</label><textarea id="iBody" placeholder="Write your piece here. Blank lines become paragraph breaks." style="min-height:200px"></textarea></div><div class="form-group"><label>Commentary Subtitle (optional)</label><input type="text" id="iSubtitle" placeholder="e.g. Editor's Note"></div>`;
-    else if (type === 'pdf') fields.innerHTML = `<div class="form-group"><label>Title</label><input type="text" id="iTitle" placeholder="e.g. Course Reading Week 3"></div><div class="form-group"><label>PDF URL</label><input type="text" id="iUrl" placeholder="https://yourusername.github.io/your-repo/yourfile.pdf"></div><div class="form-group"><label>Height (px)</label><input type="number" id="iPdfHeight" value="600" min="200" max="1200"></div>`;
+    else if (type === 'pdf') fields.innerHTML = `<div class="form-group"><label>Title</label><input type="text" id="iTitle" placeholder="e.g. Course Reading Week 3"></div><div class="form-group"><label>PDF URL</label><input type="text" id="iUrl" placeholder="https://yourusername.github.io/your-repo/yourfile.pdf"></div><div class="form-row"><div class="form-group"><label>Width (px or %)</label><input type="text" id="iPdfWidth" value="100%"></div><div class="form-group"><label>Height (px)</label><input type="number" id="iPdfHeight" value="600" min="200" max="1200"></div></div>`;
   }
 
   function saveItem() {
@@ -665,6 +665,7 @@
       body: document.getElementById('iBody')?.value.trim() || '',
       subtitle: document.getElementById('iSubtitle')?.value.trim() || '',
       pdfHeight: document.getElementById('iPdfHeight')?.value || '600',
+      pdfWidth: document.getElementById('iPdfWidth')?.value || '100%',
       commentary: document.getElementById('iCommentary').value.trim(),
       tag: document.getElementById('iTag').value
     };
