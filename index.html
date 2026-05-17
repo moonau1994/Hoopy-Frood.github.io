@@ -598,12 +598,13 @@
 
       document.getElementById('eItemLid').value = lid;
       document.getElementById('eItemIdx').value = idx;
+      document.getElementById('eItemType').value = item.type;
       document.getElementById('eItemTitle').value = item.title || '';
       document.getElementById('eItemTag').value = item.tag || 'context';
       document.getElementById('eItemCommentary').value = item.commentary || '';
-      if (document.getElementById('eItemUrl')) document.getElementById('eItemUrl').value = item.url || '';
-      if (document.getElementById('eItemBody')) document.getElementById('eItemBody').value = item.body || '';
-      if (document.getElementById('eItemSubtitle')) document.getElementById('eItemSubtitle').value = item.subtitle || '';
+      document.getElementById('eItemUrl').value = item.url || '';
+      document.getElementById('eItemBody').value = item.body || '';
+      document.getElementById('eItemSubtitle').value = item.subtitle || '';
 
       document.getElementById('eItemUrlGroup').style.display = item.type === 'video' ? '' : 'none';
       document.getElementById('eItemBodyGroup').style.display = item.type === 'text' ? '' : 'none';
