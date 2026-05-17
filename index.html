@@ -78,6 +78,11 @@
   .citation-card .cite-authors { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.5rem; }
   .citation-card a { color: var(--citation); font-size: 0.85rem; text-decoration: none; }
   .citation-card a:hover { text-decoration: underline; }
+  .text-post { padding: 1.25rem 1.5rem; }
+  .text-post-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 1rem; color: var(--text); }
+  .text-post-body { font-size: 0.97rem; line-height: 1.8; color: #c8c8d8; }
+  .text-para { margin-bottom: 1rem; }
+  .text-para:last-child { margin-bottom: 0; }
 
   #presentation { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
   #presentation.active { display: flex; }
@@ -230,6 +235,7 @@
       <button class="type-tab" onclick="setType('meme',this)">🖼 Meme/Image</button>
       <button class="type-tab" onclick="setType('gif',this)">🎞 GIF</button>
       <button class="type-tab" onclick="setType('citation',this)">📄 Citation/Link</button>
+      <button class="type-tab" onclick="setType('text',this)">✍️ Writing</button>
     </div>
     <div id="typeFields"></div>
     <div class="form-group">
@@ -256,7 +262,7 @@
   // =============================================
   // CONFIGURATION — change these before deploying
   // =============================================
-  const ADMIN_PW = 'admin1234'; // <-- Change this to your own password!
+  const ADMIN_PW = 'DootDoot2282!'; // <-- Change this to your own password!
   // =============================================
 
   let isAdmin = false;
@@ -437,6 +443,13 @@
         ${item.url ? `<a href="${item.url}" target="_blank">→ ${item.url}</a>` : ''}
       </div>`;
     }
+    if (item.type === 'text') {
+      const paras = (item.body || '').split(/\n\n+/).filter(Boolean).map(p => `<p class="text-para">${p.replace(/\n/g, '<br>')}</p>`).join('');
+      return `<div class="text-post">
+        ${item.title ? `<h3 class="text-post-title">${item.title}</h3>` : ''}
+        <div class="text-post-body">${paras}</div>
+      </div>`;
+    }
     return '';
   }
 
@@ -478,6 +491,7 @@
     if (type === 'video') fields.innerHTML = `<div class="form-group"><label>Video URL (YouTube / Vimeo)</label><input type="text" id="iUrl" placeholder="https://youtube.com/watch?v=..."></div><div class="form-group"><label>Title (optional)</label><input type="text" id="iTitle"></div>`;
     else if (type === 'meme' || type === 'gif') fields.innerHTML = `<div class="form-group"><label>Image URL</label><input type="text" id="iUrl" placeholder="https://..."></div><div class="form-group"><label>Title (optional)</label><input type="text" id="iTitle"></div>`;
     else if (type === 'citation') fields.innerHTML = `<div class="form-group"><label>Paper / Resource Title</label><input type="text" id="iTitle"></div><div class="form-group"><label>Authors</label><input type="text" id="iAuthors" placeholder="Smith et al., 2024"></div><div class="form-group"><label>URL / DOI</label><input type="text" id="iUrl" placeholder="https://..."></div>`;
+    else if (type === 'text') fields.innerHTML = `<div class="form-group"><label>Title</label><input type="text" id="iTitle" placeholder="e.g. A Note on Hallucination"></div><div class="form-group"><label>Body</label><textarea id="iBody" placeholder="Write your piece here. Blank lines become paragraph breaks." style="min-height:200px"></textarea></div>`;
   }
 
   function saveItem() {
@@ -488,6 +502,7 @@
       url: document.getElementById('iUrl')?.value.trim() || '',
       title: document.getElementById('iTitle')?.value.trim() || '',
       authors: document.getElementById('iAuthors')?.value.trim() || '',
+      body: document.getElementById('iBody')?.value.trim() || '',
       commentary: document.getElementById('iCommentary').value.trim(),
       tag: document.getElementById('iTag').value
     };
