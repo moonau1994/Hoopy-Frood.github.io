@@ -521,7 +521,7 @@
         </div>
         ${renderItemContent(item)}
         <div class="media-commentary">
-          ${item.title && item.type !== 'citation' ? `<div class="media-title">${item.title}</div>` : ''}
+          ${item.title && item.type !== 'citation' && item.type !== 'text' ? `<div class="media-title">${item.title}</div>` : ''}
           ${item.type === 'text' && item.subtitle ? `<div class="media-subtitle">${item.subtitle}</div>` : ''}
           ${item.commentary ? `<p>${item.commentary}</p>` : ''}
         </div>`;
