@@ -514,7 +514,7 @@
           ${isAdmin ? `<div style="display:flex;gap:0.5rem">
             <button class="icon-btn" onclick="moveItem('${id}',${idx},-1)">↑</button>
             <button class="icon-btn" onclick="moveItem('${id}',${idx},1)">↓</button>
-            ${item.type === 'text' ? `<button class="icon-btn" onclick="showEditItemModal('${id}',${idx})">✏️</button>` : ''}
+            ${(item.type === 'text' || item.type === 'video') ? `<button class="icon-btn" onclick="showEditItemModal('${id}',${idx})">✏️</button>` : ''}
             <button class="icon-btn" onclick="deleteItem('${id}',${idx})">🗑</button>
           </div>` : ''}
         </div>
@@ -585,10 +585,26 @@
     document.getElementById('eItemLid').value = lid;
     document.getElementById('eItemIdx').value = idx;
     document.getElementById('eItemTitle').value = item.title || '';
-    document.getElementById('eItemBody').value = item.body || '';
-    document.getElementById('eItemSubtitle').value = item.subtitle || '';
     document.getElementById('eItemTag').value = item.tag || 'context';
     document.getElementById('eItemCommentary').value = item.commentary || '';
+
+    const bodyGroup = document.getElementById('eItemBodyGroup');
+    const urlGroup = document.getElementById('eItemUrlGroup');
+    const subtitleGroup = document.getElementById('eItemSubtitleGroup');
+
+    if (item.type === 'text') {
+      bodyGroup.style.display = '';
+      urlGroup.style.display = 'none';
+      subtitleGroup.style.display = '';
+      document.getElementById('eItemBody').value = item.body || '';
+      document.getElementById('eItemSubtitle').value = item.subtitle || '';
+    } else if (item.type === 'video') {
+      bodyGroup.style.display = 'none';
+      urlGroup.style.display = '';
+      subtitleGroup.style.display = 'none';
+      document.getElementById('eItemUrl').value = item.url || '';
+    }
+
     document.getElementById('editItemModal').classList.add('active');
   }
 
@@ -597,11 +613,16 @@
     const idx = parseInt(document.getElementById('eItemIdx').value);
     const lec = state.lectures.find(l => l.id === lid);
     if (!lec) return;
-    lec.items[idx].title = document.getElementById('eItemTitle').value.trim();
-    lec.items[idx].body = document.getElementById('eItemBody').value.trim();
-    lec.items[idx].subtitle = document.getElementById('eItemSubtitle').value.trim();
-    lec.items[idx].tag = document.getElementById('eItemTag').value;
-    lec.items[idx].commentary = document.getElementById('eItemCommentary').value.trim();
+    const item = lec.items[idx];
+    item.title = document.getElementById('eItemTitle').value.trim();
+    item.tag = document.getElementById('eItemTag').value;
+    item.commentary = document.getElementById('eItemCommentary').value.trim();
+    if (item.type === 'text') {
+      item.body = document.getElementById('eItemBody').value.trim();
+      item.subtitle = document.getElementById('eItemSubtitle').value.trim();
+    } else if (item.type === 'video') {
+      item.url = document.getElementById('eItemUrl').value.trim();
+    }
     saveState();
     closeModal('editItemModal');
     renderLecture(lid);
