@@ -256,6 +256,40 @@
   </div>
 </div>
 
+<!-- EDIT ITEM MODAL -->
+<div class="modal-overlay" id="editItemModal">
+  <div class="modal">
+    <h3>Edit Item</h3>
+    <input type="hidden" id="eItemLid">
+    <input type="hidden" id="eItemIdx">
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="eItemTitle">
+    </div>
+    <div class="form-group">
+      <label>Body</label>
+      <textarea id="eItemBody" style="min-height:200px"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Tag</label>
+      <select id="eItemTag">
+        <option value="context">Context</option>
+        <option value="humor">Humor</option>
+        <option value="evidence">Evidence</option>
+        <option value="citation">Citation</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Commentary</label>
+      <textarea id="eItemCommentary"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('editItemModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditedItem()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- ADD ITEM MODAL -->
 <div class="modal-overlay" id="addItemModal">
   <div class="modal">
@@ -470,6 +504,7 @@
           ${isAdmin ? `<div style="display:flex;gap:0.5rem">
             <button class="icon-btn" onclick="moveItem('${id}',${idx},-1)">↑</button>
             <button class="icon-btn" onclick="moveItem('${id}',${idx},1)">↓</button>
+            ${item.type === 'text' ? `<button class="icon-btn" onclick="showEditItemModal('${id}',${idx})">✏️</button>` : ''}
             <button class="icon-btn" onclick="deleteItem('${id}',${idx})">🗑</button>
           </div>` : ''}
         </div>
@@ -529,6 +564,33 @@
     const lec = state.lectures.find(l => l.id === lid);
     lec.items.splice(idx, 1);
     saveState();
+    renderLecture(lid);
+  }
+
+  function showEditItemModal(lid, idx) {
+    const lec = state.lectures.find(l => l.id === lid);
+    if (!lec) return;
+    const item = lec.items[idx];
+    document.getElementById('eItemLid').value = lid;
+    document.getElementById('eItemIdx').value = idx;
+    document.getElementById('eItemTitle').value = item.title || '';
+    document.getElementById('eItemBody').value = item.body || '';
+    document.getElementById('eItemTag').value = item.tag || 'context';
+    document.getElementById('eItemCommentary').value = item.commentary || '';
+    document.getElementById('editItemModal').classList.add('active');
+  }
+
+  function saveEditedItem() {
+    const lid = document.getElementById('eItemLid').value;
+    const idx = parseInt(document.getElementById('eItemIdx').value);
+    const lec = state.lectures.find(l => l.id === lid);
+    if (!lec) return;
+    lec.items[idx].title = document.getElementById('eItemTitle').value.trim();
+    lec.items[idx].body = document.getElementById('eItemBody').value.trim();
+    lec.items[idx].tag = document.getElementById('eItemTag').value;
+    lec.items[idx].commentary = document.getElementById('eItemCommentary').value.trim();
+    saveState();
+    closeModal('editItemModal');
     renderLecture(lid);
   }
 
