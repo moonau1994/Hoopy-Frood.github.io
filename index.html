@@ -4,6 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hoopy Frood</title>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDgZcjLJFfI8MLKmnucAPpVNGFyta2M3a8",
+    authDomain: "hoopy-frood.firebaseapp.com",
+    databaseURL: "https://hoopy-frood-default-rtdb.firebaseio.com",
+    projectId: "hoopy-frood",
+    storageBucket: "hoopy-frood.firebasestorage.app",
+    messagingSenderId: "539824203257",
+    appId: "1:539824203257:web:51d90cb0c74792ef334928"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
+  const dataRef = ref(db, 'hoopy');
+
+  window.fbSet = (data) => set(dataRef, data);
+  window.fbListen = (cb) => onValue(dataRef, snap => cb(snap.val()));
+  window.fbSignIn = (email, password) => signInWithEmailAndPassword(auth, email, password);
+  window.fbSignOut = () => signOut(auth);
+  window.fbOnAuth = (cb) => onAuthStateChanged(auth, cb);
+</script>
 <style>
   :root {
     --bg: #0d0d0f;
@@ -73,6 +99,7 @@
   .media-commentary { padding: 0.75rem 1.25rem 1rem; }
   .media-commentary p { color: var(--text); line-height: 1.6; font-size: 0.95rem; }
   .media-commentary .media-title { font-weight: 700; margin-bottom: 0.3rem; font-size: 1rem; }
+  .media-subtitle { font-size: 0.85rem; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.35rem; }
   .citation-card { background: var(--surface2); border-left: 3px solid var(--citation); border-radius: 0 8px 8px 0; padding: 1rem 1.25rem; margin: 0.75rem 1.25rem; }
   .citation-card .cite-title { font-weight: 700; margin-bottom: 0.25rem; }
   .citation-card .cite-authors { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.5rem; }
@@ -83,7 +110,6 @@
   .text-post-body { font-size: 0.97rem; line-height: 1.8; color: #c8c8d8; }
   .text-para { margin-bottom: 1rem; }
   .text-para:last-child { margin-bottom: 0; }
-  .media-subtitle { font-size: 0.85rem; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.35rem; }
 
   #presentation { display: none; position: fixed; inset: 0; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
   #presentation.active { display: flex; }
@@ -114,17 +140,11 @@
   .type-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
   .type-tab { padding: 0.35rem 0.85rem; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.82rem; transition: all 0.2s; }
   .type-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-
-  .pw-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; width: 90%; max-width: 380px; text-align: center; }
-  .pw-box h2 { font-size: 1.3rem; margin-bottom: 0.5rem; }
-  .pw-box p { color: var(--muted); font-size: 0.88rem; margin-bottom: 1.5rem; }
-  .pw-box input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 0.7rem 1rem; font-size: 1rem; margin-bottom: 1rem; text-align: center; letter-spacing: 2px; }
-  .pw-box input:focus { outline: none; border-color: var(--accent); }
-  .pw-error { color: #ef4444; font-size: 0.82rem; margin-top: 0.5rem; }
-
   .back-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.88rem; padding: 0; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.4rem; }
   .back-btn:hover { color: var(--text); }
   .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+  .loading { text-align: center; padding: 4rem; color: var(--muted); }
+  .nav-user { font-size: 0.78rem; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -132,7 +152,9 @@
 <nav>
   <div class="logo">Hoopy Frood <span>AI Literacy Lecture Hub</span></div>
   <div class="nav-btns">
-    <button class="btn btn-ghost btn-sm" id="adminBtn" onclick="showPasswordModal()">Admin</button>
+    <span class="nav-user" id="navUser"></span>
+    <button class="btn btn-ghost btn-sm" id="adminBtn" onclick="showPasswordModal()">Admin Login</button>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn" style="display:none" onclick="doSignOut()">Log out</button>
     <button class="btn btn-primary btn-sm" id="addLectureBtn" style="display:none" onclick="showAddLectureModal()">+ New Lecture</button>
   </div>
 </nav>
@@ -141,6 +163,7 @@
   <div style="margin-top:1.5rem">
     <div class="page-title">Lecture Sessions</div>
     <div class="page-sub">AI literacy — commentary, context & chaos</div>
+    <div class="loading" id="loadingMsg">Loading lectures...</div>
     <div class="lecture-grid" id="lectureGrid"></div>
     <div class="empty-state" id="emptyState" style="display:none">
       <div class="big">🐬</div>
@@ -185,14 +208,21 @@
   </div>
 </div>
 
-<!-- PASSWORD MODAL -->
+<!-- LOGIN MODAL -->
 <div class="modal-overlay" id="pwModal">
-  <div class="pw-box">
-    <h2>Admin Access</h2>
-    <p>Enter the password to manage lectures and content.</p>
-    <input type="password" id="pwInput" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPassword()">
-    <button class="btn btn-primary" style="width:100%" onclick="checkPassword()">Unlock</button>
-    <div class="pw-error" id="pwError"></div>
+  <div class="modal" style="text-align:center">
+    <h3>Admin Login</h3>
+    <p style="color:var(--muted);font-size:0.88rem;margin-bottom:1.5rem">Sign in with your admin account.</p>
+    <div class="form-group" style="text-align:left">
+      <label>Email</label>
+      <input type="email" id="pwEmail" value="apopm94@proton.me">
+    </div>
+    <div class="form-group" style="text-align:left">
+      <label>Password</label>
+      <input type="password" id="pwInput" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPassword()">
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="checkPassword()">Sign In</button>
+    <div style="color:#ef4444;font-size:0.82rem;margin-top:0.75rem" id="pwError"></div>
     <hr class="divider">
     <button class="btn btn-ghost btn-sm" onclick="closeModal('pwModal')">Cancel</button>
   </div>
@@ -334,33 +364,59 @@
 </div>
 
 <script>
-  async function hashString(str) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-    return [...new Uint8Array(buf)].map(x => x.toString(16).padStart(2, '0')).join('');
-  }
-
-  // Hash is computed from the password below at runtime — the plaintext is only
-  // here briefly during page load and is never exposed in network requests.
-  let ADMIN_PW_HASH = '';
-  hashString('DootDoot2282!').then(h => { ADMIN_PW_HASH = h; });
-
   let isAdmin = false;
   let state = { lectures: [], currentLectureId: null };
   let presItems = [], presIdx = 0;
   let currentItemType = 'video';
 
-  // ---- STORAGE (localStorage for self-hosted) ----
-  function loadState() {
-    try {
-      const raw = localStorage.getItem('hoopy_state');
-      if (raw) state = JSON.parse(raw);
-    } catch(e) {}
-    renderHome();
-    checkUrlHash();
+  // ---- AUTH ----
+  function showPasswordModal() {
+    document.getElementById('pwModal').classList.add('active');
+    setTimeout(() => document.getElementById('pwInput').focus(), 100);
   }
 
+  async function checkPassword() {
+    const email = document.getElementById('pwEmail').value.trim();
+    const password = document.getElementById('pwInput').value;
+    document.getElementById('pwError').textContent = '';
+    try {
+      await window.fbSignIn(email, password);
+      // onAuthStateChanged will handle the rest
+      closeModal('pwModal');
+      document.getElementById('pwInput').value = '';
+    } catch(e) {
+      document.getElementById('pwError').textContent = 'Incorrect email or password.';
+    }
+  }
+
+  async function doSignOut() {
+    await window.fbSignOut();
+    isAdmin = false;
+    updateAdminUI();
+  }
+
+  function updateAdminUI() {
+    document.getElementById('adminBtn').style.display = isAdmin ? 'none' : '';
+    document.getElementById('logoutBtn').style.display = isAdmin ? '' : 'none';
+    document.getElementById('addLectureBtn').style.display = isAdmin ? '' : 'none';
+    document.getElementById('addItemBtn').style.display = isAdmin ? '' : 'none';
+    document.getElementById('navUser').textContent = isAdmin ? 'apopm94@proton.me' : '';
+    renderHome();
+    if (state.currentLectureId) renderLecture(state.currentLectureId);
+  }
+
+  // ---- FIREBASE ----
   function saveState() {
-    localStorage.setItem('hoopy_state', JSON.stringify(state));
+    window.fbSet({ lectures: state.lectures });
+  }
+
+  function loadState() {
+    window.fbListen(data => {
+      state.lectures = (data && data.lectures) ? data.lectures : [];
+      document.getElementById('loadingMsg').style.display = 'none';
+      renderHome();
+      checkUrlHash();
+    });
   }
 
   // ---- ROUTING ----
@@ -371,33 +427,6 @@
       const lec = state.lectures.find(l => l.id === id);
       if (lec) showLecture(id);
     }
-  }
-
-  // ---- AUTH ----
-  function showPasswordModal() {
-    document.getElementById('pwModal').classList.add('active');
-    setTimeout(() => document.getElementById('pwInput').focus(), 100);
-  }
-
-  async function checkPassword() {
-    const v = document.getElementById('pwInput').value;
-    const hash = await hashString(v);
-    if (hash === ADMIN_PW_HASH) {
-      isAdmin = true;
-      closeModal('pwModal');
-      document.getElementById('pwInput').value = '';
-      updateAdminUI();
-    } else {
-      document.getElementById('pwError').textContent = 'Incorrect password.';
-    }
-  }
-
-  function updateAdminUI() {
-    document.getElementById('adminBtn').style.display = isAdmin ? 'none' : '';
-    document.getElementById('addLectureBtn').style.display = isAdmin ? '' : 'none';
-    document.getElementById('addItemBtn').style.display = isAdmin ? '' : 'none';
-    renderHome();
-    if (state.currentLectureId) renderLecture(state.currentLectureId);
   }
 
   // ---- HOME ----
@@ -427,7 +456,7 @@
         <h3>${lec.title}</h3>
         <div class="date">${lec.date || ''}${lec.tag ? ' · ' + lec.tag : ''}</div>
         ${lec.desc ? `<div style="font-size:0.83rem;color:var(--muted);margin-bottom:0.75rem">${lec.desc}</div>` : ''}
-        <div class="item-count">${(lec.items||[]).length} item${(lec.items||[]).length !== 1 ? 's' : ''}</div>`;
+        <div class="item-count">${(lec.items || []).length} item${(lec.items || []).length !== 1 ? 's' : ''}</div>`;
       grid.appendChild(d);
     });
   }
@@ -506,6 +535,7 @@
   function renderLecture(id) {
     const lec = state.lectures.find(l => l.id === id);
     if (!lec) return;
+    if (!lec.items) lec.items = [];
     const feed = document.getElementById('mediaFeed');
     const empty = document.getElementById('feedEmpty');
     feed.innerHTML = '';
@@ -594,6 +624,7 @@
     renderLecture(lid);
   }
 
+  // ---- EDIT ITEM ----
   function showEditItemModal(lid, idx) {
     try {
       const lec = state.lectures.find(l => l.id === lid);
@@ -663,6 +694,7 @@
   function saveItem() {
     const lec = state.lectures.find(l => l.id === state.currentLectureId);
     if (!lec) return;
+    if (!lec.items) lec.items = [];
     const item = {
       type: currentItemType,
       url: document.getElementById('iUrl')?.value.trim() || '',
@@ -724,9 +756,12 @@
         ${item.authors ? `<div style="color:var(--muted);margin-bottom:0.75rem">${item.authors}</div>` : ''}
         ${item.url ? `<a href="${item.url}" target="_blank" style="color:var(--citation)">${item.url}</a>` : ''}
       </div>`;
+    } else if (item.type === 'text') {
+      const paras = (item.body || '').split(/\n\n+/).filter(Boolean).map(p => `<p class="text-para" style="text-align:left">${p.replace(/\n/g, '<br>')}</p>`).join('');
+      content = `<div style="text-align:left;max-width:700px;margin:0 auto">${item.title ? `<h3 style="font-size:1.4rem;margin-bottom:1rem">${item.title}</h3>` : ''}${paras}</div>`;
     }
     slide.innerHTML = `<div class="pres-tag"><span class="tag tag-${item.tag}">${item.tag}</span></div>${content}
-      ${item.title && item.type !== 'citation' ? `<div class="pres-commentary" style="font-weight:700">${item.title}</div>` : ''}
+      ${item.title && item.type !== 'citation' && item.type !== 'text' ? `<div class="pres-commentary" style="font-weight:700">${item.title}</div>` : ''}
       ${item.commentary ? `<div class="pres-commentary">${item.commentary}</div>` : ''}`;
   }
 
@@ -742,7 +777,16 @@
   window.addEventListener('click', e => { if (e.target.classList.contains('modal-overlay')) closeModal(e.target.id); });
 
   // ---- INIT ----
-  loadState();
+  const waitForFb = setInterval(() => {
+    if (window.fbListen && window.fbOnAuth) {
+      clearInterval(waitForFb);
+      loadState();
+      window.fbOnAuth(user => {
+        isAdmin = !!user;
+        updateAdminUI();
+      });
+    }
+  }, 50);
 </script>
 </body>
 </html>
